@@ -1,12 +1,12 @@
 # Retail Inventory Management Using Big Data
 
 ## Project Overview
-This project explores the design of a Big Data analytics system for retail inventory
+The purpose of this project is to design a Big Data analytics system for retail inventory
 management. The goal is to analyze large-scale sales and inventory datasets in order to
 support batch-oriented analytical queries such as inventory aggregation, demand trends,
 and stock level summaries.
 
-The system is designed using a layered Big Data architecture that incorporates
+The system will be implemented using a layered Big Data architecture that incorporates
 distributed storage, parallel processing, and SQL-based querying. This project is
 being developed as part of the CS 4265 - Big Data Analytics course.
 
