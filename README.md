@@ -15,3 +15,9 @@ being developed as part of the CS 4265 - Big Data Analytics course.
 - Apache Spark
 - Apache Hive / Spark SQL
 - Parquet and CSV data formats
+
+## Repository Structure
+src/        - Spark scripts and implementation  
+data/       - dataset references  
+docs/       - project report and documentation  
+screenshots/ - proof of execution and outputs
