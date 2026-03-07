@@ -47,3 +47,8 @@ screenshots/ - proof of execution and outputs
 
 3. Run Spark job (Spark version 3.5.1):
    spark-shell -i src/retail_analysis.scala
+
+## Performance Results
+Dataset Scale | Row Count | Query Runtime
+      1x         397,884       0.7 sec
+     10x        3,978,840      2.
