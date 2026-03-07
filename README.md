@@ -48,7 +48,42 @@ screenshots/ - proof of execution and outputs
 3. Run Spark job (Spark version 3.5.1):
    spark-shell -i src/retail_analysis.scala
 
-## Performance Results
-Dataset Scale | Row Count | Query Runtime
-      1x         397,884       0.7 sec
-     10x        3,978,840      2.
+## Current Status
+### What Works
+The core system for the Retail Inventory Big Data Project is operational. The following components have been successfully implemented and tested:
+- HDFS Data Ingestion
+  The retail dataset can be uploaded to Hadoop Distributed File System (HDFS) using the provided setup script (src/hdfs_setup.sh). The script creates the required   directory and uploads the dataset to /retail in HDFS.
+
+- Spark Data Processing Pipeline
+  A working analytics pipeline has been implemented in src/retail_analysis.scala using Apache Spark. The pipeline performs the following steps:
+  -  Reads the retail dataset from HDFS
+  -  Prints the dataset schema and record counts
+  -  Cleans the data by removing invalid rows (negative quantities, zero prices, and null values)
+  -  Scales the dataset synthetically using a crossJoin to simulate larger data volumes
+  -  Executes an aggregation query to compute total revenue by product (StockCode)
+
+- Distributed Query Execution
+  The Spark job successfully executes the revenue aggregation query and displays the highest-revenue products.
+
+- Reproducibility
+  The repository includes scripts and instructions that allow the full pipeline to be reproduced:
+
+  1. Upload dataset to HDFS
+
+  2. Launch Spark
+
+  3. Execute the analytics script
+
+### What's In-Progress
+The following components are currently in progress or planned for future development:
+
+- Performance Analysis
+  Additional experimentation will be performed to analyze how query runtime changes as the dataset is scaled. Runtime measurements will be used to evaluate the scalability of the Spark processing pipeline.
+
+- Expanded Scalability Testing
+  Further dataset scaling factors will be tested to better demonstrate distributed processing performance.
+
+- Additional Documentation and Results
+  Future updates will include expanded documentation of experiment results and performance observations.
+
+Overall, the core infrastructure for data ingestion, distributed processing, and analytics is complete. The project is currently focused on evaluating system performance and documenting results.
