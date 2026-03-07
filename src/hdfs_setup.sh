@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #Start HDFS
 start-dfs.sh
 
