@@ -21,7 +21,7 @@ being developed as part of the CS 4265 - Big Data Analytics course.
 - Parquet and CSV data formats
 
 ## Dataset
-The dataset used in this project is the Online Retail dataset. Due to GitHub file size 
+The dataset used in this project is the UCI Online Retail dataset. Due to GitHub file size 
 limits, the dataset is not stored in this repository.
 
 Download it from:
