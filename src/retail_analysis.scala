@@ -15,7 +15,7 @@ val scaled10 = cleanRetail.crossJoin(spark.range(10).toDF("replication_id"))
 scaled10.count()
 
 // Perform query
-val result = scaled10.withColumn("Revenue", col("Quantity") * col("UnitPrice")).groupBy("InvoiceNo", "replication_id").agg(sum("Revenue").alias("TotalRevenue")).orderBy(desc("TotalRevenue"))
+val result = scaled10.withColumn("Revenue", col("Quantity") * col("UnitPrice")).groupBy("StockCode").agg(sum("Revenue").alias("TotalRevenue")).orderBy(desc("TotalRevenue"))
 result.show()
 
 spark.stop()
