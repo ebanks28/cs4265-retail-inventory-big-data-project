@@ -1,3 +1,4 @@
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
 val retail = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://localhost:9000/retail/retail.csv")
