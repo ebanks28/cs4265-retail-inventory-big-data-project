@@ -21,3 +21,14 @@ src/        - Spark scripts and implementation
 data/       - dataset references  
 docs/       - project report and documentation  
 screenshots/ - proof of execution and outputs
+
+## Running the Project
+
+1. Start Hadoop (Version 3.3.6)
+   start-dfs.sh
+
+2. Upload dataset
+   bash src/hdfs_setup.sh
+
+3. Run Spark job (Spark version 3.5.1)
+   spark-shell -i src/retail_analysis.scala
