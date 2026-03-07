@@ -32,8 +32,7 @@ After downloading, place it in the project directory and upload it to HDFS using
 bash src/hdfs_setup.sh
 
 ## Repository Structure
-src/           - Spark scripts and implementation  
-screenshots/   - code outputs and architecture diagrams  
+src/           - Spark scripts and implementation    
 docs/          - project report and documentation  
 screenshots/   - proof of execution and outputs
 
