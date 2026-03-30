@@ -80,7 +80,7 @@ The following components are currently in progress or planned for future develop
   Additional experimentation will be performed to analyze how query runtime changes as the dataset is scaled. Runtime measurements will be used to evaluate the scalability of the Spark processing pipeline.
 
 - Expanded Scalability Testing
-  Further dataset scaling factors will be tested to better demonstrate distributed processing performance.
+  Further dataset scaling factors will be tested to better demonstrate distributed processing performance. A second dataset, the World Bank Country Economic Data dataset, will be included to strengthen the multi-source justification.
 
 - Additional Documentation and Results
   Future updates will include expanded documentation of experiment results and performance observations.
