@@ -30,10 +30,7 @@ val OUTPUT_BASE = "hdfs://localhost:9000/retail/output"
 // ---------------------------------------------------------------------------
 // SparkSession
 // ---------------------------------------------------------------------------
-val spark = SparkSession.builder()
-  .appName("RetailInventoryAnalytics_M3_MultiSource")
-  .config("spark.sql.shuffle.partitions", "8")
-  .getOrCreate()
+val spark = SparkSession.builder().appName("RetailInventoryAnalytics_M3_MultiSource").config("spark.sql.shuffle.partitions", "8").getOrCreate()
 
 import spark.implicits._
 
@@ -44,14 +41,11 @@ println("[INFO] ========== Starting Multi-Source Analytics Pipeline ==========")
 // ===========================================================================
 println("[INFO] Loading UCI Online Retail dataset...")
 
-val retailRaw = spark.read
-  .option("header", "true")
-  .option("inferSchema", "true")
-  .csv(RETAIL_PATH)
+val retailRaw = spark.read.option("header", "true").option("inferSchema", "true").csv(RETAIL_PATH)
 
 println(s"[INFO] Raw retail row count: ${retailRaw.count()}")
 
-val retailClean = retailRaw.filter(col("Quantity") > 0).filter(col("UnitPrice") > 0).na.drop()
+val retailClean = retailRaw.filter(col("CustomerID").isNotNull).filter(col("InvoiceNo").isNotNull).filter(!col("InvoiceNo").startsWith("C")).filter(col("Quantity") > 0).filter(col("UnitPrice") > 0).withColumn("UnitPrice", col("UnitPrice").cast(DoubleType)).withColumn("Revenue", col("Quantity") * col("UnitPrice")).withColumn("InvoiceDateParsed", to_timestamp(col("InvoiceDate"), "yyyy/MM/dd HH:mm:ss")).withColumn("Year",  year(col("InvoiceDateParsed"))).withColumn("Month", month(col("InvoiceDateParsed")))
 
 println(s"[INFO] Clean retail row count: ${retailClean.count()}")
 retailClean.printSchema()
@@ -62,30 +56,40 @@ retailClean.printSchema()
 println("[INFO] Loading World Bank GDP dataset...")
 
 // The World Bank CSV has 4 metadata rows at the top before the real header.
-// We skip them by reading with header=true and then selecting only what we need.
+// Skip them by reading with header=true and then selecting only what we need.
 // The file is wide-format: each year is its own column.
 // We only need "Country Name" and the year 2011 (most of the UCI data is 2010-2011).
-val gdpRaw = spark.read
-  .option("header", "true")
-  .option("inferSchema", "false")   // all strings — we cast manually
-  .csv(GDP_PATH)
+val gdpRaw = spark.read.option("header", "true").option("inferSchema", "false").csv(GDP_PATH)
 
 // Preview the column names to confirm structure
 println("[INFO] World Bank raw columns:")
 gdpRaw.columns.take(10).foreach(println)
 
-// Select and rename the columns we need
-// Note: Spark wraps numeric column names in backticks
-val gdpClean = gdpRaw
-  .select(
-    col("Country Name").alias("CountryName"),
-    col("2011").alias("GDP_2011_Raw")
-  )
-  .filter(col("GDP_2011_Raw").isNotNull)
-  .withColumn("GDP_2011", col("GDP_2011_Raw").cast(DoubleType))
-  .filter(col("GDP_2011").isNotNull)
-  .drop("GDP_2011_Raw")
+// Read all lines as raw strings
+val rawLines = spark.sparkContext.textFile(GDP_PATH)
 
+// Find the real header (the line containing "Country Name")
+val headerLine = rawLines.filter(_.contains("Country Name")).first()
+val headers = headerLine.split(",").map(_.replaceAll("\"", "").trim)
+
+// Skip all rows up to and including the header row, keep only data rows
+val dataLines = rawLines.zipWithIndex().filter { case (line: String, idx: Long) => idx >= 5 }.map { case (line: String, idx: Long) => line }
+
+// Parse each line into a Row
+val rowRDD = dataLines.map(line => {
+  val cols = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1)
+    .map(_.replaceAll("\"", "").trim)
+  org.apache.spark.sql.Row(cols: _*)
+})
+
+// Build schema from the real header
+val schema = org.apache.spark.sql.types.StructType(
+  headers.map(h => org.apache.spark.sql.types.StructField(h, StringType, nullable = true))
+)
+
+val gdpWithHeader = spark.createDataFrame(rowRDD, schema)
+
+val gdpClean = gdpWithHeader.select(col("Country Name").alias("CountryName"),col("2011").alias("GDP_2011_Raw")).filter(col("GDP_2011_Raw").isNotNull).withColumn("GDP_2011", col("GDP_2011_Raw").cast(DoubleType)).filter(col("GDP_2011").isNotNull).drop("GDP_2011_Raw")
 println(s"[INFO] GDP records loaded: ${gdpClean.count()}")
 gdpClean.show(10)
 
