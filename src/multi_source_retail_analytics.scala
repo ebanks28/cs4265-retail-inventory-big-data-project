@@ -10,8 +10,13 @@
  *
  * Joins on Country and runs combined analytical queries.
  *
+ * Download on WSL with:
+ *   curl -o ~/multi_source_retail_analytics.scala "https://raw.githubusercontent.com/ebanks28/cs4265-retail-inventory-big-data-project/main/src/multi_source_retail_analytics.scala"
+ * Verify with:
+ *   cat ~/multi_source_retail_analytics.scala | head -20 (Should show the first 20 lines of this file)
+ *
  * Run with:
- *   spark-shell --master local[*] -i multi_source_analytics.scala
+ *   spark-shell --master local[*] -i multi_source__retail_analytics.scala
  * Or:
  *   spark-submit --class MultiSourceAnalytics multi_source_analytics.jar
  */
@@ -89,7 +94,17 @@ val schema = org.apache.spark.sql.types.StructType(
 
 val gdpWithHeader = spark.createDataFrame(rowRDD, schema)
 
-val gdpClean = gdpWithHeader.select(col("Country Name").alias("CountryName"),col("2011").alias("GDP_2011_Raw")).filter(col("GDP_2011_Raw").isNotNull).withColumn("GDP_2011", col("GDP_2011_Raw").cast(DoubleType)).filter(col("GDP_2011").isNotNull).drop("GDP_2011_Raw")
+val gdpClean = gdpWithHeader
+  .filter(row => row != headerRow)   // drop the header row from data
+  .toDF(newColNames: _*)             // apply real column names
+  .select(
+    col("Country Name").alias("CountryName"),
+    col("2011").alias("GDP_2011_Raw")
+  )
+  .filter(col("GDP_2011_Raw").isNotNull)
+  .withColumn("GDP_2011", col("GDP_2011_Raw").cast(DoubleType))
+  .filter(col("GDP_2011").isNotNull)
+  .drop("GDP_2011_Raw")
 println(s"[INFO] GDP records loaded: ${gdpClean.count()}")
 gdpClean.show(10)
 
