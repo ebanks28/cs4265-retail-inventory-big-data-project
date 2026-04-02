@@ -1,51 +1,153 @@
-# Retail Inventory Management Using Big Data
+# Scalable Retail Inventory Analytics Using Big Data Technologies
 
 ## Project Overview
 This project demonstrates scalable retail data analytics using Apache Hadoop and Apache Spark.
 
-The system:
-1. Uploads retail transaction data to HDFS
-2. Cleans and filters transaction records
-3. Scales the dataset synthetically
-4. Runs distributed Spark analytics to compute product revenue
-5. Measures performance as data size increases
+The pipeline ingests two distinct data sources, performs multi-source integration, and executes
+distributed analytical queries to produce insights on revenue, customer behavior, product performance,
+and temporal trends enriched with country-level economic context.
 
-The system will be implemented using a layered Big Data architecture that incorporates
-distributed storage, parallel processing, and SQL-based querying. This project is
-being developed as part of the CS 4265 - Big Data Analytics course.
+The system is built on a layered Big Data architecture:
+ 
+1. **Storage** — Both source datasets are stored in HDFS
+2. **Processing** — Apache Spark cleans, transforms, and joins the data
+3. **Querying** — Spark SQL executes distributed analytical queries on the unified dataset
+4. **Output** — Results are written to HDFS as Parquet files for efficient downstream access
+ 
+This project is developed as part of the CS 4265 - Big Data Analytics course.
+
+---
 
 ## Technologies
-- Hadoop Distributed File System (HDFS)
-- Apache Spark
-- Apache Hive / Spark SQL
-- Parquet and CSV data formats
 
-## Dataset
-The dataset used in this project is the UCI Online Retail dataset. Due to GitHub file size 
-limits, the dataset is not stored in this repository.
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| Distributed Storage | Apache Hadoop HDFS | 3.3.6 |
+| Parallel Processing | Apache Spark | 3.5.1 |
+| Query Interface | Spark SQL | 3.5.1 |
+| Data Formats | CSV (input), Parquet (output) | — |
+| Runtime | Scala via spark-shell | 2.12 |
 
-Download it from:
-https://archive.ics.uci.edu/ml/datasets/online+retail
+---
 
-After downloading, place it in the project directory and upload it to HDFS using:
+## Data Sources
+ 
+### 1. UCI Online Retail Dataset
+Retail transaction data covering approximately 541,909 records from a UK-based online retailer
+(December 2010 – December 2011).
+ 
+**Download:** https://archive.ics.uci.edu/dataset/352/online+retail
+ 
+Download the file and rename it to `retail.csv` if necessary.
+ 
+### 2. World Bank GDP Dataset
+Country-level GDP data (current USD) used to enrich retail analytics with economic context.
+ 
+**Download:** https://data.worldbank.org/indicator/NY.GDP.MKTP.CD
+ 
+Click **Download → CSV**. Extract the zip and locate the file named:
+`API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv`
+ 
+> **Note:** Neither dataset is stored in this repository due to file size limits.
+> Both must be downloaded and uploaded to HDFS before running the pipeline (see Setup below).
 
-bash src/hdfs_setup.sh
+---
 
 ## Repository Structure
-src/           - Spark scripts and implementation    
-docs/          - project report and documentation  
-screenshots/   - proof of execution and outputs
+ 
+```
+├── src/
+│   ├── multi_source_retail_analytics.scala   # Main M3 analytics pipeline (multi-source)
+│   ├── retail_analysis.scala                 # M2 single-source analytics pipeline
+│   └── hdfs_setup.sh                         # HDFS directory creation and data upload script
+├── docs/
+│   ├── CS4265_Evan_Banks_M2.pdf              # Milestone 2 progress report
+│   └── CS4265_Evan_Banks_M3.pdf              # Milestone 3 progress report
+└── screenshots/
+    └── ...                                   # Proof of execution and query outputs
+```
+ 
+---
 
-## Running the Project
+## Environment Setup
+ 
+### Prerequisites
+ 
+Ensure the following are installed and configured in your WSL (Ubuntu) environment:
+ 
+- Java 8 or 11
+- Hadoop 3.3.6 (with HDFS configured in pseudo-distributed mode)
+- Apache Spark 3.5.1
+- SSH service running (`sudo service ssh start`)
+ 
+### Start HDFS
+ 
+```bash
+sudo service ssh start
+start-dfs.sh
+```
+ 
+Verify all services are running:
+ 
+```bash
+hdfs dfsadmin -report
+```
+ 
+You should see **Live datanodes: 1** in the output.
+ 
+---
 
-1. Start Hadoop (Version 3.3.6):
-   start-dfs.sh
+## Data Upload to HDFS
+ 
+### Option A: Using the setup script
+ 
+```bash
+bash src/hdfs_setup.sh
+```
+ 
+### Option B: Manual upload
+ 
+Create the required HDFS directories:
+ 
+```bash
+hdfs dfs -mkdir -p /retail
+hdfs dfs -mkdir -p /retail/worldbank
+```
+ 
+Upload both datasets:
+ 
+```bash
+hdfs dfs -put /path/to/retail.csv /retail/retail.csv
+hdfs dfs -put /path/to/API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv /retail/worldbank/API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv
+```
+ 
+Verify both files are in HDFS:
+ 
+```bash
+hdfs dfs -ls /retail
+hdfs dfs -ls /retail/worldbank
+```
+ 
+---
 
-2. Upload dataset:
-   bash src/hdfs_setup.sh
+## Running the Pipeline
+ 
+### M3 Pipeline — Multi-Source Analytics (Current)
+ 
+Download the script from the repository:
+ 
+```bash
+curl -o ~/multi_source_retail_analytics.scala \
+  "https://raw.githubusercontent.com/ebanks28/cs4265-retail-inventory-big-data-project/main/src/multi_source_retail_analytics.scala"
+```
+ 
+Run the full end-to-end pipeline:
+ 
+```bash
+spark-shell --master local[*] -i ~/multi_source_retail_analytics.scala
+```
 
-3. Run Spark job (Spark version 3.5.1):
-   spark-shell -i src/retail_analysis.scala
+---
 
 ## Current Status
 ### What Works
