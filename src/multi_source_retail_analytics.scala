@@ -16,7 +16,7 @@
  *   cat ~/multi_source_retail_analytics.scala | head -20 (Should show the first 20 lines of this file)
  *
  * Run with:
- *   spark-shell --master local[*] -i multi_source__retail_analytics.scala
+ *   spark-shell --master local[*] -i multi_source_retail_analytics.scala
  * Or:
  *   spark-submit --class MultiSourceAnalytics multi_source_analytics.jar
  */
