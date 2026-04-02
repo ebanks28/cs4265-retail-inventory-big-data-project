@@ -94,17 +94,8 @@ val schema = org.apache.spark.sql.types.StructType(
 
 val gdpWithHeader = spark.createDataFrame(rowRDD, schema)
 
-val gdpClean = gdpWithHeader
-  .filter(row => row != headerRow)   // drop the header row from data
-  .toDF(newColNames: _*)             // apply real column names
-  .select(
-    col("Country Name").alias("CountryName"),
-    col("2011").alias("GDP_2011_Raw")
-  )
-  .filter(col("GDP_2011_Raw").isNotNull)
-  .withColumn("GDP_2011", col("GDP_2011_Raw").cast(DoubleType))
-  .filter(col("GDP_2011").isNotNull)
-  .drop("GDP_2011_Raw")
+// Clean dataset drops the header row from data and applies real column names
+val gdpClean = gdpWithHeader.filter(row => row != headerRow).toDF(newColNames: _*).select(col("Country Name").alias("CountryName"),col("2011").alias("GDP_2011_Raw")).filter(col("GDP_2011_Raw").isNotNull).withColumn("GDP_2011", col("GDP_2011_Raw").cast(DoubleType)).filter(col("GDP_2011").isNotNull).drop("GDP_2011_Raw")
 println(s"[INFO] GDP records loaded: ${gdpClean.count()}")
 gdpClean.show(10)
 
