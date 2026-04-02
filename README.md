@@ -33,7 +33,7 @@ This project is developed as part of the CS 4265 - Big Data Analytics course.
 ## Data Sources
  
 ### 1. UCI Online Retail Dataset
-Retail transaction data covering approximately 541,909 records from a UK-based online retailer
+Retail transaction data covering 541,909 records from a UK-based online retailer
 (December 2010 – December 2011).
  
 **Download:** https://archive.ics.uci.edu/dataset/352/online+retail
@@ -149,42 +149,95 @@ spark-shell --master local[*] -i ~/multi_source_retail_analytics.scala
 
 ---
 
-## Current Status
+## Pipeline Description
+ 
+The M3 pipeline (`multi_source_retail_analytics.scala`) executes the following stages:
+ 
+### Stage 1 — Data Ingestion
+- Reads `retail.csv` from HDFS using Spark's CSV reader
+- Reads the World Bank GDP file using `sparkContext.textFile()` with custom header parsing
+  to handle the four metadata rows present before the real column header
+ 
+### Stage 2 — Cleaning and Transformation
+- Removes null `CustomerID` and `InvoiceNo` values
+- Filters cancellation records (InvoiceNo prefixed with `C`)
+- Removes rows with non-positive `Quantity` or `UnitPrice`
+- Derives `Revenue` (Quantity × UnitPrice)
+- Parses `InvoiceDate` (format: `yyyy/MM/dd HH:mm:ss`) to extract `Year` and `Month`
+- Selects and casts the 2011 GDP column from the World Bank dataset
+ 
+### Stage 3 — Multi-Source Integration
+- Applies a country name mapping table to normalize UCI informal names
+  (e.g., `EIRE` → `Ireland`, `USA` → `United States`, `Czech Republic` → `Czechia`)
+  to match World Bank formal names
+- Joins retail data to GDP data on normalized country name (left join)
+- Registers the unified result as a Spark SQL temporary view: `retail_gdp`
+- Match rate: 396,807 / 397,884 rows (99.7%) across 34 of 37 countries
+ 
+### Stage 4 — Analytical Queries
+Five Spark SQL queries execute on the `retail_gdp` view:
+ 
+| Query | Description |
+|-------|-------------|
+| 1 | Revenue by country with GDP context |
+| 2 | Revenue relative to GDP (market penetration proxy) |
+| 3 | Purchasing behavior bucketed by GDP tier |
+| 4 | Monthly revenue trend by GDP tier |
+| 5 | Source integration diagnostics |
+ 
+### Stage 5 — Output
+Results are written to HDFS as Parquet files under `/retail/output/`:
+ 
+```
+/retail/output/revenue_by_country_gdp
+/retail/output/revenue_per_gdp
+/retail/output/gdp_tier_analysis
+/retail/output/monthly_trend_by_gdp_tier
+```
+ 
+---
+
+## Expected Output
+ 
+As the pipeline runs, you will see `[INFO]` log lines indicating progress through each stage:
+ 
+```
+[INFO] ========== Starting Multi-Source Analytics Pipeline ==========
+[INFO] Loading UCI Online Retail dataset...
+[INFO] Raw retail row count: 541909
+[INFO] Clean retail row count: 397884
+[INFO] Loading World Bank GDP dataset...
+[INFO] GDP records loaded: 217
+[INFO] Applying country name mapping...
+[INFO] Joining retail data with World Bank GDP data...
+[INFO] Rows with GDP match:    396807
+[INFO] Rows without GDP match: 1077
+[INFO] --- Query 1: Revenue by Country with GDP Context ---
+...
+[INFO] ========== Multi-Source Analytics Pipeline Complete ==========
+```
+ 
+---
+
+## Current Status (Milestone 3)
+ 
 ### What Works
-The core system for the Retail Inventory Big Data Project is operational. The following components have been successfully implemented and tested:
-- HDFS Data Ingestion
-  The retail dataset can be uploaded to Hadoop Distributed File System (HDFS) using the provided setup script (src/hdfs_setup.sh). The script creates the required   directory and uploads the dataset to /retail in HDFS.
-
-- Spark Data Processing Pipeline
-  A working analytics pipeline has been implemented in src/retail_analysis.scala using Apache Spark. The pipeline performs the following steps:
-  -  Reads the retail dataset from HDFS
-  -  Prints the dataset schema and record counts
-  -  Cleans the data by removing invalid rows (negative quantities, zero prices, and null values)
-  -  Scales the dataset synthetically using a crossJoin to simulate larger data volumes
-  -  Executes an aggregation query to compute total revenue by product (StockCode)
-
-- Distributed Query Execution
-  The Spark job successfully executes the revenue aggregation query and displays the highest-revenue products.
-
-- Reproducibility
-  The repository includes scripts and instructions that allow the full pipeline to be reproduced:
-
-  1. Upload dataset to HDFS
-
-  2. Launch Spark
-
-  3. Execute the analytics script
-
-### What's In-Progress
-The following components are currently in progress or planned for future development:
-
-- Performance Analysis
-  Additional experimentation will be performed to analyze how query runtime changes as the dataset is scaled. Runtime measurements will be used to evaluate the scalability of the Spark processing pipeline.
-
-- Expanded Scalability Testing
-  Further dataset scaling factors will be tested to better demonstrate distributed processing performance. A second dataset, the World Bank Country Economic Data dataset, will be included to strengthen the multi-source justification.
-
-- Additional Documentation and Results
-  Future updates will include expanded documentation of experiment results and performance observations.
-
-Overall, the core infrastructure for data ingestion, distributed processing, and analytics is complete. The project is currently focused on evaluating system performance and documenting results.
+- HDFS single-node pseudo-distributed cluster fully operational
+- Two distinct data sources ingested and stored in HDFS
+- Full cleaning and transformation pipeline including date parsing and revenue derivation
+- Country name normalization resolving mismatches between UCI and World Bank naming conventions
+- Multi-source join with 99.7% row match rate
+- Five Spark SQL analytical queries executing successfully
+- All outputs written to HDFS as Parquet files
+ 
+### Known Limitations
+- Single-node deployment is memory-bound at approximately 100 million rows
+  (demonstrated in M2 scalability experiments)
+- Channel Islands, European Community, and Unspecified are unmappable to World Bank
+  country entries and are excluded from GDP-dependent queries
+- Pipeline is batch-oriented; real-time streaming ingestion is outside project scope
+ 
+### What's Next (Milestone 4)
+- Final validation and portfolio-ready documentation
+- Data dictionary for the `retail_gdp` schema
+- Complete bottleneck analysis and scalability conclusions
