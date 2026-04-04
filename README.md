@@ -61,8 +61,10 @@ Click **Download → CSV**. Extract the zip and locate the file named:
 │   ├── retail_analysis.scala                 # M2 single-source analytics pipeline
 │   └── hdfs_setup.sh                         # HDFS directory creation and data upload script
 ├── docs/
+|   ├── CS4265_Evan_Banks_M1.pdf              # Milestone 1 initial report
 │   ├── CS4265_Evan_Banks_M2.pdf              # Milestone 2 progress report
-│   └── CS4265_Evan_Banks_M3.pdf              # Milestone 3 progress report
+│   ├── CS4265_Evan_Banks_M3.pdf              # Milestone 3 progress report
+|   └── Data_Dictionary.md                    # Data dictionary explaining final schema
 └── screenshots/
     └── ...                                   # Proof of execution and query outputs
 ```
