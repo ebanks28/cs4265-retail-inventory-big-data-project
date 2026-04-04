@@ -72,15 +72,36 @@ Click **Download → CSV**. Extract the zip and locate the file named:
 ---
 
 ## Environment Setup
- 
+
 ### Prerequisites
  
-Ensure the following are installed and configured in your WSL (Ubuntu) environment:
- 
-- Java 8 or 11
-- Hadoop 3.3.6 (with HDFS configured in pseudo-distributed mode)
-- Apache Spark 3.5.1
-- SSH service running (`sudo service ssh start`)
+Ensure the following are installed in your WSL (Ubuntu) environment. If any are missing,
+install them using the commands below.
+
+**Java 11**
+```bash
+sudo apt update
+sudo apt install openjdk-11-jdk -y
+java -version
+```
+
+**Hadoop 3.3.6**
+```bash
+wget https://archive.apache.org/dist/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+tar -xzf hadoop-3.3.6.tar.gz
+```
+
+**Apache Spark 3.5.1**
+```bash
+wget https://archive.apache.org/dist/spark/spark-3.5.1/spark-3.5.1-bin-hadoop3.tgz
+tar -xzf spark-3.5.1-bin-hadoop3.tgz
+```
+
+**SSH**
+```bash
+sudo apt install openssh-server -y
+sudo service ssh start
+```
  
 ### Start HDFS
  
