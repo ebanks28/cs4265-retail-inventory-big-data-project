@@ -39,6 +39,10 @@ Retail transaction data covering 541,909 records from a UK-based online retailer
 **Download:** https://archive.ics.uci.edu/dataset/352/online+retail
  
 Download the file and rename it to `retail.csv` if necessary.
+
+> **Note:** The date format in `retail.csv` may vary depending on how the file is
+> exported from Excel. The pipeline handles both `yyyy/MM/dd HH:mm:ss` and
+> `MM/dd/yyyy HH:mm` automatically.
  
 ### 2. World Bank GDP Dataset
 Country-level GDP data (current USD) used to enrich retail analytics with economic context.
