@@ -50,7 +50,7 @@ val retailRaw = spark.read.option("header", "true").option("inferSchema", "true"
 
 println(s"[INFO] Raw retail row count: ${retailRaw.count()}")
 
-val retailClean = retailRaw.filter(col("CustomerID").isNotNull).filter(col("InvoiceNo").isNotNull).filter(!col("InvoiceNo").startsWith("C")).filter(col("Quantity") > 0).filter(col("UnitPrice") > 0).withColumn("UnitPrice", col("UnitPrice").cast(DoubleType)).withColumn("Revenue", col("Quantity") * col("UnitPrice")).withColumn("InvoiceDateParsed", to_timestamp(col("InvoiceDate"), "yyyy/MM/dd HH:mm:ss")).withColumn("Year",  year(col("InvoiceDateParsed"))).withColumn("Month", month(col("InvoiceDateParsed")))
+val retailClean = retailRaw.filter(col("CustomerID").isNotNull).filter(col("InvoiceNo").isNotNull).filter(!col("InvoiceNo").startsWith("C")).filter(col("Quantity") > 0).filter(col("UnitPrice") > 0).withColumn("UnitPrice", col("UnitPrice").cast(DoubleType)).withColumn("Revenue", col("Quantity") * col("UnitPrice")).withColumn("InvoiceDateParsed", coalesce(to_timestamp(col("InvoiceDate"), "yyyy/MM/dd HH:mm:ss"), to_timestamp(col("InvoiceDate"), "MM/dd/yyyy HH:mm"))).withColumn("Year",  year(col("InvoiceDateParsed"))).withColumn("Month", month(col("InvoiceDateParsed")))
 
 println(s"[INFO] Clean retail row count: ${retailClean.count()}")
 retailClean.printSchema()
