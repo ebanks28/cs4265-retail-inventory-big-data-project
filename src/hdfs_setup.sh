@@ -8,6 +8,7 @@
 # Prerequisites:
 #   - Hadoop 3.3.6 installed and configured in pseudo-distributed mode
 #   - SSH service running (sudo service ssh start)
+#   - Java 8 or 11 installed (required by Hadoop, verify with: java -version)
 #   - Both source files downloaded and placed in the same directory as this script:
 #       retail.csv
 #       API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv
