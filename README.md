@@ -66,7 +66,11 @@ Click **Download → CSV**. Extract the zip and locate the file named:
 │   ├── CS4265_Evan_Banks_M3.pdf              # Milestone 3 progress report
 |   └── Data_Dictionary.md                    # Data dictionary explaining final schema
 └── screenshots/
-    └── ...                                   # Proof of execution and query outputs
+    ├── Data_Acquisition_Screenshot.png       # Evidence of retail.csv being loaded from HDFS into Spark (M2)
+    ├── Data_Storage_Screenshot.png           # Evidence of retail.csv being stored in HDFS (M2)
+    ├── Query_Results_Screenshot.png          # Output of total revenue per product query on retail.csv (M2)
+    ├── data_flow_diagram.png                 # Proposed data flow pipeline (M1)
+    └── stack_architecture_diagram.png        # Proposed big data technology stack (M1)
 ```
  
 ---
