@@ -33,12 +33,15 @@ This project is developed as part of the CS 4265 - Big Data Analytics course.
 ## Data Sources
  
 ### 1. UCI Online Retail Dataset
-Retail transaction data covering 541,909 records from a UK-based online retailer
-(December 2010 – December 2011).
- 
+Retail transaction data covering approximately 541,909 records from a UK-based online
+retailer (December 2010 – December 2011).
+
 **Download:** https://archive.ics.uci.edu/dataset/352/online+retail
- 
-Download the file and rename it to `retail.csv` if necessary.
+
+The dataset downloads as a `.zip` file. After unzipping, open the Excel file and export
+it as CSV by going to **File → Save As** and selecting
+**CSV UTF-8 (Comma delimited) (*.csv)** from the file type dropdown. Save the file as
+`retail.csv`.
 
 > **Note:** The date format in `retail.csv` may vary depending on how the file is
 > exported from Excel. The pipeline handles both `yyyy/MM/dd HH:mm:ss` and
@@ -81,8 +84,8 @@ Click **Download → CSV**. Extract the zip and locate the file named:
 
 ## Environment Setup
 
-### Prerequisites
- 
+## Prerequisites
+
 Ensure the following are installed in your WSL (Ubuntu) environment. If any are missing,
 install them using the commands below.
 
@@ -110,6 +113,13 @@ tar -xzf spark-3.5.1-bin-hadoop3.tgz
 sudo apt install openssh-server -y
 sudo service ssh start
 ```
+
+> **Note:** A `.gitattributes` file is included in the repository to ensure Unix line
+> endings on all scripts. If you encounter `\r` related errors when running any `.sh`
+> or `.scala` file, fix them with:
+> ```bash
+> sed -i 's/\r//' path/to/file
+> ```
  
 ### Start HDFS
  
@@ -129,34 +139,30 @@ You should see **Live datanodes: 1** in the output.
 ---
 
 ## Data Upload to HDFS
- 
-### Option A: Using the setup script
- 
+
+Place both downloaded data files in the root of the cloned repository before running
+the setup script:
+```
+cs4265-retail-inventory-big-data-project/
+├── retail.csv
+├── API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv
+├── src/
+├── docs/
+└── ...
+```
+
+Then run the setup script from the repo root:
 ```bash
 bash src/hdfs_setup.sh
 ```
- 
-### Option B: Manual upload
- 
-Create the required HDFS directories:
- 
+
+This will start HDFS, create the required directories, and upload both files. If you
+prefer to upload manually:
 ```bash
 hdfs dfs -mkdir -p /retail
 hdfs dfs -mkdir -p /retail/worldbank
-```
- 
-Upload both datasets:
- 
-```bash
-hdfs dfs -put /path/to/retail.csv /retail/retail.csv
-hdfs dfs -put /path/to/API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv /retail/worldbank/API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv
-```
- 
-Verify both files are in HDFS:
- 
-```bash
-hdfs dfs -ls /retail
-hdfs dfs -ls /retail/worldbank
+hdfs dfs -put retail.csv /retail/retail.csv
+hdfs dfs -put API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv /retail/worldbank/API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv
 ```
  
 ---
