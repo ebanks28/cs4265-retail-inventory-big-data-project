@@ -29,7 +29,7 @@ import org.apache.spark.sql.types._
 // Configuration
 // ---------------------------------------------------------------------------
 val RETAIL_PATH = "hdfs://localhost:9000/retail/retail.csv"
-val GDP_PATH    = "hdfs://localhost:9000/retail/worldbank/API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv"
+val GDP_PATH    = "hdfs://localhost:9000/retail/worldbank/"
 val OUTPUT_BASE = "hdfs://localhost:9000/retail/output"
 
 // ---------------------------------------------------------------------------
@@ -71,7 +71,7 @@ println("[INFO] World Bank raw columns:")
 gdpRaw.columns.take(10).foreach(println)
 
 val gdpClean = {
-  val rawLines = spark.sparkContext.textFile(GDP_PATH)
+  val rawLines = spark.sparkContext.textFile(GDP_PATH + "API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv")
   val headerLine = rawLines.filter(_.contains("Country Name")).first()
   val headers = headerLine.split(",").map(_.replaceAll("\"", "").trim)
 
