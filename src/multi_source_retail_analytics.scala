@@ -35,7 +35,7 @@ val OUTPUT_BASE = "hdfs://localhost:9000/retail/output"
 // ---------------------------------------------------------------------------
 // SparkSession
 // ---------------------------------------------------------------------------
-val spark = SparkSession.builder().appName("RetailInventoryAnalytics_M3_MultiSource").config("spark.sql.shuffle.partitions", "8").getOrCreate()
+val spark = SparkSession.builder().appName("RetailInventoryAnalytics_M3_MultiSource").config("spark.sql.shuffle.partitions", "8").config("spark.sql.legacy.timeParserPolicy", "CORRECTED").getOrCreate()
 
 import spark.implicits._
 
