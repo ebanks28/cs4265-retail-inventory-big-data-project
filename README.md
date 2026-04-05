@@ -145,7 +145,7 @@ the setup script:
 ```
 cs4265-retail-inventory-big-data-project/
 ├── retail.csv
-├── API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv
+├── API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv
 ├── src/
 ├── docs/
 └── ...
@@ -162,7 +162,7 @@ prefer to upload manually:
 hdfs dfs -mkdir -p /retail
 hdfs dfs -mkdir -p /retail/worldbank
 hdfs dfs -put retail.csv /retail/retail.csv
-hdfs dfs -put API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv /retail/worldbank/API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv
+hdfs dfs -put API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv /retail/worldbank/
 ```
  
 ---
