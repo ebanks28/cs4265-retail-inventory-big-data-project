@@ -70,32 +70,42 @@ val gdpRaw = spark.read.option("header", "true").option("inferSchema", "false").
 println("[INFO] World Bank raw columns:")
 gdpRaw.columns.take(10).foreach(println)
 
-// Read all lines as raw strings
-val rawLines = spark.sparkContext.textFile(GDP_PATH)
+val gdpClean = {
+  val rawLines = spark.sparkContext.textFile(GDP_PATH)
+  val headerLine = rawLines.filter(_.contains("Country Name")).first()
+  val headers = headerLine.split(",").map(_.replaceAll("\"", "").trim)
 
-// Find the real header (the line containing "Country Name")
-val headerLine = rawLines.filter(_.contains("Country Name")).first()
-val headers = headerLine.split(",").map(_.replaceAll("\"", "").trim)
+  val dataLines = rawLines
+    .zipWithIndex()
+    .filter { case (line: String, idx: Long) => idx >= 5 }
+    .map { case (line: String, idx: Long) => line }
 
-// Skip all rows up to and including the header row, keep only data rows
-val dataLines = rawLines.zipWithIndex().filter { case (line: String, idx: Long) => idx >= 5 }.map { case (line: String, idx: Long) => line }
+  val rowRDD = dataLines.map(line => {
+    val cols = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1)
+      .map(_.replaceAll("\"", "").trim)
+    org.apache.spark.sql.Row(cols: _*)
+  })
 
-// Parse each line into a Row
-val rowRDD = dataLines.map(line => {
-  val cols = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1)
-    .map(_.replaceAll("\"", "").trim)
-  org.apache.spark.sql.Row(cols: _*)
-})
+  val schema = org.apache.spark.sql.types.StructType(
+    headers.map(h => org.apache.spark.sql.types.StructField(h, StringType, nullable = true))
+  )
 
-// Build schema from the real header
-val schema = org.apache.spark.sql.types.StructType(
-  headers.map(h => org.apache.spark.sql.types.StructField(h, StringType, nullable = true))
-)
+  val gdpWithHeader = spark.createDataFrame(rowRDD, schema)
+  val headerRow = gdpWithHeader.first()
 
-val gdpWithHeader = spark.createDataFrame(rowRDD, schema)
+  gdpWithHeader
+    .filter(row => row != headerRow)
+    .toDF(headers: _*)
+    .select(
+      col("Country Name").alias("CountryName"),
+      col("2011").alias("GDP_2011_Raw")
+    )
+    .filter(col("GDP_2011_Raw").isNotNull)
+    .withColumn("GDP_2011", col("GDP_2011_Raw").cast(DoubleType))
+    .filter(col("GDP_2011").isNotNull)
+    .drop("GDP_2011_Raw")
+}
 
-// Clean dataset drops the header row from data and applies real column names
-val gdpClean = gdpWithHeader.filter(row => row != headerRow).toDF(newColNames: _*).select(col("Country Name").alias("CountryName"),col("2011").alias("GDP_2011_Raw")).filter(col("GDP_2011_Raw").isNotNull).withColumn("GDP_2011", col("GDP_2011_Raw").cast(DoubleType)).filter(col("GDP_2011").isNotNull).drop("GDP_2011_Raw")
 println(s"[INFO] GDP records loaded: ${gdpClean.count()}")
 gdpClean.show(10)
 
