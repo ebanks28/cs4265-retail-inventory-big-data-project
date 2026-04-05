@@ -19,7 +19,13 @@ set -e  # Exit immediately if any command fails
 # Configuration — update these paths if your files are stored elsewhere
 # ---------------------------------------------------------------------------
 RETAIL_FILE="retail.csv"
-GDP_FILE="API_NY.GDP.MKTP.CD_DS2_en_csv_v2_133326.csv"
+GDP_FILE=$(ls API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv 2>/dev/null | head -1)
+if [ -z "$GDP_FILE" ]; then
+    echo "[ERROR] World Bank GDP file not found. Download it from:"
+    echo "        https://data.worldbank.org/indicator/NY.GDP.MKTP.CD"
+    exit 1
+fi
+echo "[INFO] Found GDP file: $GDP_FILE"
  
 HDFS_RETAIL_DIR="/retail"
 HDFS_WORLDBANK_DIR="/retail/worldbank"
