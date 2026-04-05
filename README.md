@@ -75,11 +75,16 @@ Click **Download → CSV**. Extract the zip and locate the file named:
 └── screenshots/
     ├── Data_Acquisition_Screenshot.png       # Evidence of retail.csv being loaded from HDFS into Spark (M2)
     ├── Data_Storage_Screenshot.png           # Evidence of retail.csv being stored in HDFS (M2)
+    ├── Query_1_Screenshot.png                # Sample output of revenue by country with GDP context query (M3)
+    ├── Query_2_Screenshot.png                # Sample output of revenue relative to GDP query (M3)
+    ├── Query_3_Screenshot.png                # Output of purchasing behavior by GDP tier query (M3)
+    ├── Query_4_Screenshot.png                # Output of monthly revenue trend by GDP tier query (M3)
+    ├── Query_5_Screenshot.png                # Output of source integration diagnostics query (M3)
     ├── Query_Results_Screenshot.png          # Output of total revenue per product query on retail.csv (M2)
     ├── data_flow_diagram.png                 # Proposed data flow pipeline (M1)
     └── stack_architecture_diagram.png        # Proposed big data technology stack (M1)
 ```
- 
+
 ---
 
 ## Environment Setup
