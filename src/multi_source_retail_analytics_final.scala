@@ -2,7 +2,7 @@
  * multi_source_analytics.scala
  * --------------------------
  * CS 4265 - Big Data Analytics
- * Milestone 4: Portfolio-ready
+ * Milestone 4: Final Deliverable
  *
  * Ingests two distinct data sources from HDFS:
  *   1. UCI Online Retail Dataset       -> /retail/retail.csv
@@ -33,6 +33,46 @@ val GDP_PATH    = "hdfs://localhost:9000/retail/worldbank/"
 val OUTPUT_BASE = "hdfs://localhost:9000/retail/output"
 
 // ---------------------------------------------------------------------------
+// Retry Helper
+// ---------------------------------------------------------------------------
+def withRetry[T](operationName: String, maxAttempts: Int = 3)(operation: => T): Option[T] = {
+  var attempt = 0
+  var result: Option[T] = None
+  while (attempt < maxAttempts && result.isEmpty) {
+    attempt += 1
+    try {
+      result = Some(operation)
+    } catch {
+      case e: Exception =>
+        println(s"[WARN] $operationName failed on attempt $attempt of $maxAttempts: ${e.getMessage}")
+        if (attempt < maxAttempts) {
+          println(s"[INFO] Retrying $operationName in 5 seconds...")
+          Thread.sleep(5000)
+        } else {
+          println(s"[ERROR] $operationName failed after $maxAttempts attempts. Skipping.")
+        }
+    }
+  }
+  result
+}
+
+// ---------------------------------------------------------------------------
+// HDFS File Existence Check
+// ---------------------------------------------------------------------------
+def hdfsFileExists(spark: SparkSession, path: String): Boolean = {
+  try {
+    val hadoopConf = spark.sparkContext.hadoopConfiguration
+    val fs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
+    val hdfsPath = new org.apache.hadoop.fs.Path(path)
+    fs.exists(hdfsPath)
+  } catch {
+    case e: Exception =>
+      println(s"[WARN] Could not check HDFS path $path: ${e.getMessage}")
+      false
+  }
+}
+
+// ---------------------------------------------------------------------------
 // SparkSession
 // ---------------------------------------------------------------------------
 val spark = SparkSession.builder().appName("RetailInventoryAnalytics_M3_MultiSource").config("spark.sql.shuffle.partitions", "8").config("spark.sql.legacy.timeParserPolicy", "CORRECTED").getOrCreate()
@@ -42,36 +82,80 @@ import spark.implicits._
 println("[INFO] ========== Starting Multi-Source Analytics Pipeline ==========")
 
 // ===========================================================================
-// SECTION 1: Load & Clean UCI Retail Data
+// Section 1: Load & Clean UCI Retail Data
 // ===========================================================================
+println("[INFO] Checking HDFS path for retail dataset...")
+
+if (!hdfsFileExists(spark, RETAIL_PATH)) {
+  println(s"[ERROR] Retail dataset not found at $RETAIL_PATH")
+  println("[ERROR] Upload it to HDFS with: hdfs dfs -put retail.csv /retail/retail.csv")
+  spark.stop()
+  System.exit(1)
+}
+
 println("[INFO] Loading UCI Online Retail dataset...")
 
-val retailRaw = spark.read.option("header", "true").option("inferSchema", "true").csv(RETAIL_PATH)
+val retailRaw = withRetry("Retail data ingestion") {
+  spark.read
+    .option("header", "true")
+    .option("inferSchema", "true")
+    .csv(RETAIL_PATH)
+}.getOrElse {
+  println("[ERROR] Could not load retail data after retries. Exiting.")
+  spark.stop()
+  System.exit(1)
+  null  // unreachable but required for type inference
+}
 
 println(s"[INFO] Raw retail row count: ${retailRaw.count()}")
 
-val retailClean = retailRaw.filter(col("CustomerID").isNotNull).filter(col("InvoiceNo").isNotNull).filter(!col("InvoiceNo").startsWith("C")).filter(col("Quantity") > 0).filter(col("UnitPrice") > 0).withColumn("UnitPrice", col("UnitPrice").cast(DoubleType)).withColumn("Revenue", col("Quantity") * col("UnitPrice")).withColumn("InvoiceDateParsed", coalesce(to_timestamp(col("InvoiceDate"), "yyyy/MM/dd HH:mm:ss"), to_timestamp(col("InvoiceDate"), "MM/dd/yyyy HH:mm"))).withColumn("Year",  year(col("InvoiceDateParsed"))).withColumn("Month", month(col("InvoiceDateParsed")))
+// Check for empty dataset
+if (retailRaw.count() == 0) {
+  println("[ERROR] Retail dataset is empty. Check the source file.")
+  spark.stop()
+  System.exit(1)
+}
 
-println(s"[INFO] Clean retail row count: ${retailClean.count()}")
-retailClean.printSchema()
+val retail = retailRaw
+  .filter(col("CustomerID").isNotNull)
+  .filter(col("InvoiceNo").isNotNull)
+  .filter(!col("InvoiceNo").startsWith("C"))
+  .filter(col("Quantity") > 0)
+  .filter(col("UnitPrice") > 0)
+  .withColumn("UnitPrice", col("UnitPrice").cast(DoubleType))
+  .withColumn("Revenue", col("Quantity") * col("UnitPrice"))
+  .withColumn("InvoiceDateParsed",
+    coalesce(
+      to_timestamp(col("InvoiceDate"), "yyyy/MM/dd HH:mm:ss"),
+      to_timestamp(col("InvoiceDate"), "MM/dd/yyyy HH:mm")
+    )
+  )
+  .withColumn("Year",  year(col("InvoiceDateParsed")))
+  .withColumn("Month", month(col("InvoiceDateParsed")))
+
+val cleanCount = retail.count()
+println(s"[INFO] Clean retail row count: $cleanCount")
+
+if (cleanCount == 0) {
+  println("[ERROR] All retail rows were filtered out during cleaning. Check source data quality.")
+  spark.stop()
+  System.exit(1)
+}
 
 // ===========================================================================
 // SECTION 2: Load & Clean World Bank GDP Data
 // ===========================================================================
-println("[INFO] Loading World Bank GDP dataset...")
+println("[INFO] Checking HDFS path for GDP dataset...")
 
-// The World Bank CSV has 4 metadata rows at the top before the real header.
-// Skip them by reading with header=true and then selecting only what we need.
-// The file is wide-format: each year is its own column.
-// We only need "Country Name" and the year 2011 (most of the UCI data is 2010-2011).
-val gdpRaw = spark.read.option("header", "true").option("inferSchema", "false").csv(GDP_PATH)
+val GDP_DIR = "hdfs://localhost:9000/retail/worldbank/"
 
-// Preview the column names to confirm structure
-println("[INFO] World Bank raw columns:")
-gdpRaw.columns.take(10).foreach(println)
+val gdpClean: org.apache.spark.sql.DataFrame = withRetry("GDP data ingestion") {
+  val rawLines = spark.sparkContext.textFile(GDP_DIR + "API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv")
 
-val gdpClean = {
-  val rawLines = spark.sparkContext.textFile(GDP_PATH + "API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv")
+  if (rawLines.isEmpty()) {
+    throw new Exception(s"GDP file not found or empty at $GDP_DIR")
+  }
+
   val headerLine = rawLines.filter(_.contains("Country Name")).first()
   val headers = headerLine.split(",").map(_.replaceAll("\"", "").trim)
 
@@ -83,7 +167,9 @@ val gdpClean = {
   val rowRDD = dataLines.map(line => {
     val cols = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1)
       .map(_.replaceAll("\"", "").trim)
-    org.apache.spark.sql.Row(cols: _*)
+    // Pad or trim to match header length to handle malformed rows
+    val padded = cols.padTo(headers.length, "").take(headers.length)
+    org.apache.spark.sql.Row(padded: _*)
   })
 
   val schema = org.apache.spark.sql.types.StructType(
@@ -104,6 +190,15 @@ val gdpClean = {
     .withColumn("GDP_2011", col("GDP_2011_Raw").cast(DoubleType))
     .filter(col("GDP_2011").isNotNull)
     .drop("GDP_2011_Raw")
+}.getOrElse {
+  println("[WARN] GDP data could not be loaded. Continuing without GDP enrichment.")
+  spark.createDataFrame(
+    spark.sparkContext.emptyRDD[org.apache.spark.sql.Row],
+    org.apache.spark.sql.types.StructType(Seq(
+      org.apache.spark.sql.types.StructField("CountryName", StringType, true),
+      org.apache.spark.sql.types.StructField("GDP_2011", DoubleType, true)
+    ))
+  )
 }
 
 println(s"[INFO] GDP records loaded: ${gdpClean.count()}")
@@ -204,7 +299,13 @@ val revenueByCountryGDP = spark.sql("""
 
 println("Revenue by Country with GDP Context:")
 revenueByCountryGDP.show(20, truncate = false)
-revenueByCountryGDP.write.mode("overwrite").parquet(s"$OUTPUT_BASE/revenue_by_country_gdp")
+try {
+  revenueByCountryGDP.write.mode("overwrite").parquet(s"$OUTPUT_BASE/revenue_by_country_gdp")
+  println(s"[INFO] revenue_by_country_gdp written successfully")
+} catch {
+  case e: Exception =>
+    println(s"[ERROR] Failed to write revenue_by_country_gdp: ${e.getMessage}")
+}
 
 // ---------------------------------------------------------------------------
 // Query 2: Revenue Per Capita Proxy
@@ -227,7 +328,13 @@ val revenuePerGDP = spark.sql("""
 
 println("Revenue relative to GDP (top 15):")
 revenuePerGDP.show(15, truncate = false)
-revenuePerGDP.write.mode("overwrite").parquet(s"$OUTPUT_BASE/revenue_per_gdp")
+try {
+  revenuePerGDP.write.mode("overwrite").parquet(s"$OUTPUT_BASE/revenue_per_gdp")
+  println(s"[INFO] revenue_per_gdp written successfully")
+} catch {
+  case e: exception => 
+    println(s"[ERROR] Failed to write revenue_per_gdp: ${e.getMessage}")
+}
 
 // ---------------------------------------------------------------------------
 // Query 3: GDP Tier Analysis
@@ -257,7 +364,13 @@ val gdpTierAnalysis = spark.sql("""
 
 println("Purchasing behavior by GDP tier:")
 gdpTierAnalysis.show(truncate = false)
-gdpTierAnalysis.write.mode("overwrite").parquet(s"$OUTPUT_BASE/gdp_tier_analysis")
+try {
+  gdpTierAnalysis.write.mode("overwrite").parquet(s"$OUTPUT_BASE/gdp_tier_analysis")
+  println(s"[INFO] gdp_tier_analysis written successfully")
+} catch {
+  case e: Exception =>
+    println(s"[ERROR] Failed to write gdp_tier_analysis: ${e.getMessage}")
+}
 
 // ---------------------------------------------------------------------------
 // Query 4: Monthly Trend by GDP Tier
@@ -285,7 +398,13 @@ val monthlyByTier = spark.sql("""
 
 println("Monthly revenue trend by GDP tier:")
 monthlyByTier.show(36, truncate = false)
-monthlyByTier.write.mode("overwrite").parquet(s"$OUTPUT_BASE/monthly_trend_by_gdp_tier")
+try {
+  monthlyByTier.write.mode("overwrite").parquet(s"$OUTPUT_BASE/monthly_trend_by_gdp_tier")
+  println(s"[INFO] monthly_trend_by_gdp_tier written successfully")
+} catch {
+  case e: Exception =>
+    println(s"[ERROR] Failed to write monthly_trend_by_gdp_tier: ${e.getMessage}")
+}
 
 // ---------------------------------------------------------------------------
 // Query 5: Single-Source vs Multi-Source Row Reconciliation
