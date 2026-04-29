@@ -133,7 +133,7 @@ val retailClean = retailRaw
   .withColumn("Year",  year(col("InvoiceDateParsed")))
   .withColumn("Month", month(col("InvoiceDateParsed")))
 
-val cleanCount = retail.count()
+val cleanCount = retailClean.count()
 println(s"[INFO] Clean retail row count: $cleanCount")
 
 if (cleanCount == 0) {
