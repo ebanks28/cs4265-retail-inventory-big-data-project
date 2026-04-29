@@ -62,17 +62,13 @@ def withRetry[T](operationName: String, maxAttempts: Int = 3)(operation: => T): 
 // ---------------------------------------------------------------------------
 def hdfsFileExists(spark: SparkSession, path: String): Boolean = {
   try {
-    val hadoopConf = spark.sparkContext.hadoopConfiguration
-    val fs = org.apache.hadoop.fs.FileSystem.get(hadoopConf)
-    val hdfsPath = new org.apache.hadoop.fs.Path(path)
-    fs.exists(hdfsPath)
+    spark.read.csv(path).limit(1).count() >= 0
   } catch {
     case e: Exception =>
-      println(s"[WARN] Could not check HDFS path $path: ${e.getMessage}")
+      println(s"[WARN] Could not verify path $path: ${e.getMessage}")
       false
   }
 }
-
 // ---------------------------------------------------------------------------
 // SparkSession
 // ---------------------------------------------------------------------------
