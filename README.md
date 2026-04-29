@@ -64,7 +64,7 @@ Click **Download → CSV**. Extract the zip and locate the file named:
  
 ```
 ├── src/
-│   ├── multi_source_retail_analytics.scala   # Main M3 analytics pipeline (multi-source)
+│   ├── multi_source_retail_analytics.scala   # M3 multi-source analytics pipeline
 │   ├── retail_analysis.scala                 # M2 single-source analytics pipeline
 │   └── hdfs_setup.sh                         # HDFS directory creation and data upload script
 ├── docs/
