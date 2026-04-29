@@ -13,7 +13,8 @@
  * Download on WSL with:
  *   curl -o ~/multi_source_retail_analytics.scala "https://raw.githubusercontent.com/ebanks28/cs4265-retail-inventory-big-data-project/main/src/multi_source_retail_analytics_final.scala"
  * Verify with:
- *   cat ~/multi_source_retail_analytics.scala | head -20 (Should show the first 20 lines of this file)
+ *   cat ~/multi_source_retail_analytics.scala | head -20 
+ *   (The above command should show the first 20 lines of this file.)
  *
  * Run with:
  *   spark-shell --master local[*] -i multi_source_retail_analytics.scala
