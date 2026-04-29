@@ -11,7 +11,7 @@
  * Joins on Country and runs combined analytical queries.
  *
  * Download on WSL with:
- *   curl -o ~/multi_source_retail_analytics.scala "https://raw.githubusercontent.com/ebanks28/cs4265-retail-inventory-big-data-project/main/src/multi_source_retail_analytics.scala"
+ *   curl -o ~/multi_source_retail_analytics.scala "https://raw.githubusercontent.com/ebanks28/cs4265-retail-inventory-big-data-project/main/src/multi_source_retail_analytics_final.scala"
  * Verify with:
  *   cat ~/multi_source_retail_analytics.scala | head -20 (Should show the first 20 lines of this file)
  *
@@ -116,7 +116,7 @@ if (retailRaw.count() == 0) {
   System.exit(1)
 }
 
-val retail = retailRaw
+val retailClean = retailRaw
   .filter(col("CustomerID").isNotNull)
   .filter(col("InvoiceNo").isNotNull)
   .filter(!col("InvoiceNo").startsWith("C"))
@@ -332,7 +332,7 @@ try {
   revenuePerGDP.write.mode("overwrite").parquet(s"$OUTPUT_BASE/revenue_per_gdp")
   println(s"[INFO] revenue_per_gdp written successfully")
 } catch {
-  case e: exception => 
+  case e: Exception => 
     println(s"[ERROR] Failed to write revenue_per_gdp: ${e.getMessage}")
 }
 
