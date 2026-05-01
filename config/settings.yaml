@@ -1,0 +1,47 @@
+# config/settings.yaml
+# --------------------
+# Configuration parameters for the retail inventory analytics pipeline.
+# Edit these values to match your environment before running the pipeline.
+# Reference these settings in multi_source_retail_analytics.scala via the
+# CONFIG block at the top of the script.
+ 
+# ---------------------------------------------------------------------------
+# HDFS Paths
+# ---------------------------------------------------------------------------
+hdfs:
+  namenode: "hdfs://localhost:9000"
+  retail_path: "/retail/retail.csv"
+  gdp_dir: "/retail/worldbank/"
+  output_base: "/retail/output"
+ 
+# ---------------------------------------------------------------------------
+# Spark Configuration
+# ---------------------------------------------------------------------------
+spark:
+  app_name: "RetailInventoryAnalytics_M4"
+  shuffle_partitions: 8          # Tuned for single-node deployment; increase for cluster
+  time_parser_policy: "CORRECTED"
+ 
+# ---------------------------------------------------------------------------
+# Pipeline Behavior
+# ---------------------------------------------------------------------------
+pipeline:
+  max_retry_attempts: 3          # Number of retry attempts for ingestion failures
+  retry_delay_seconds: 5         # Delay between retry attempts
+  scale_factor: 1                # Set to 1 for production; increase for scalability testing
+ 
+# ---------------------------------------------------------------------------
+# Data Cleaning Thresholds
+# ---------------------------------------------------------------------------
+cleaning:
+  min_quantity: 0                # Rows with Quantity <= this value are removed
+  min_unit_price: 0              # Rows with UnitPrice <= this value are removed
+  slow_mover_threshold: 50       # Products with TotalUnitsSold below this are flagged
+ 
+# ---------------------------------------------------------------------------
+# GDP Configuration
+# ---------------------------------------------------------------------------
+gdp:
+  year_column: "2011"            # Which year's GDP to use from the World Bank dataset
+  gdp_tier_high: 1000000000000   # GDP threshold for High tier (1 trillion USD)
+  gdp_tier_medium: 100000000000  # GDP threshold for Medium tier (100 billion USD)
