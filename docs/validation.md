@@ -106,8 +106,8 @@ The following mappings were validated by confirming that joined rows contain non
 |-------------|-----------|-----------------|--------------|
 | United Kingdom | United Kingdom | 2,675.59 | ✓ Matched |
 | EIRE | Ireland | 240.98 | ✓ Matched |
-| USA | United States | — | ✓ Matched |
-| Czech Republic | Czechia | — | ✓ Matched |
+| USA | United States | 15,599.73 | ✓ Matched |
+| Czech Republic | Czechia | 231.43 | ✓ Matched |
 | Netherlands | Netherlands | 913.14 | ✓ Matched |
 | Germany | Germany | 3,823.58 | ✓ Matched |
  
