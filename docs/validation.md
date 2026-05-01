@@ -139,7 +139,7 @@ which is not material to analytical results.
 | Germany | 3,823.58 | 228,867.14 | 457 | 94 | 2,434.76 |
 | France | 2,870.41 | 209,024.05 | 389 | 87 | 2,402.58 |
  
-**Reasonableness check:** The United Kingdom dominates revenue as expected — the UCI
+**Reasonableness check:** The United Kingdom dominates revenue as expected since the UCI
 dataset is sourced from a UK-based retailer. The high RevenuePerCustomer for EIRE
 (£88,515.30) reflects only 3 customers placing 260 invoices, suggesting a small number
 of high-volume wholesale buyers, which is consistent with the dataset's B2B nature.
@@ -250,4 +250,4 @@ and exiting. The error message directs the user to start HDFS with `start-dfs.sh
   conditional aggregation and no shuffle stage.
 - The GDP file parsing stage (textFile + RDD map) is the slowest ingestion step
   due to row-by-row processing, but is a one-time cost that does not affect
-  query performance
+  query performance.
