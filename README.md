@@ -63,26 +63,37 @@ Click **Download → CSV**. Extract the zip and locate the file named:
 ## Repository Structure
  
 ```
-├── src/
-│   ├── multi_source_retail_analytics.scala   # M3 multi-source analytics pipeline
-│   ├── retail_analysis.scala                 # M2 single-source analytics pipeline
-│   └── hdfs_setup.sh                         # HDFS directory creation and data upload script
+cs4265-retail-inventory-big-data-project/
+├── README.md                                    # Comprehensive project documentation
+├── LICENSE                                      # Open source license
+├── .gitattributes                               # Uses UNIX line endings when cloned regardless of OS
+├── .gitignore                                   # Excludes data, credentials, artifacts
+├── config/
+│   └── settings.yaml                            # Pipeline configuration parameters
 ├── docs/
-|   ├── CS4265_Evan_Banks_M1.pdf              # Milestone 1 initial report
-│   ├── CS4265_Evan_Banks_M2.pdf              # Milestone 2 progress report
-│   ├── CS4265_Evan_Banks_M3.pdf              # Milestone 3 progress report
-|   └── Data_Dictionary.md                    # Data dictionary explaining final schema
+|   ├── CS4265_Evan_Banks_M1.pdf                 # Milestone 1 initial report
+│   ├── CS4265_Evan_Banks_M2.pdf                 # Milestone 2 progress report
+│   ├── CS4265_Evan_Banks_M3.pdf                 # Milestone 3 progress report
+|   ├── CS4265_Evan_Banks_M4.pdf                 # Milestone 4 final report
+|   ├── Data_Dictionary.md                       # Schema documentation for the retail_gdp unified dataset
+|   └── validation.md                            # Data validation report for the M4 pipeline
+├── src/
+|   ├── multi_source_retail_analytics.scala      # M4 refined multi-source analytics pipeline
+│   ├── multi_source_retail_analytics_old.scala  # M3 multi-source analytics pipeline
+│   ├── retail_analysis.scala                    # M2 single-source analytics pipeline
+│   └── hdfs_setup.sh                            # HDFS directory creation and data upload script
 └── screenshots/
-    ├── Data_Acquisition_Screenshot.png       # Evidence of retail.csv being loaded from HDFS into Spark (M2)
-    ├── Data_Storage_Screenshot.png           # Evidence of retail.csv being stored in HDFS (M2)
-    ├── Query_1_Screenshot.png                # Sample output of revenue by country with GDP context query (M3)
-    ├── Query_2_Screenshot.png                # Sample output of revenue relative to GDP query (M3)
-    ├── Query_3_Screenshot.png                # Output of purchasing behavior by GDP tier query (M3)
-    ├── Query_4_Screenshot.png                # Output of monthly revenue trend by GDP tier query (M3)
-    ├── Query_5_Screenshot.png                # Output of source integration diagnostics query (M3)
-    ├── Query_Results_Screenshot.png          # Output of total revenue per product query on retail.csv (M2)
-    ├── data_flow_diagram.png                 # Proposed data flow pipeline (M1)
-    └── stack_architecture_diagram.png        # Proposed big data technology stack (M1)
+    ├── Data_Acquisition_Screenshot.png          # Evidence of retail.csv being loaded from HDFS into Spark (M2)
+    ├── Data_Storage_Screenshot.png              # Evidence of retail.csv being stored in HDFS (M2)
+    ├── Query_1_Screenshot.png                   # Sample output of revenue by country with GDP context query (M3)
+    ├── Query_2_Screenshot.png                   # Sample output of revenue relative to GDP query (M3)
+    ├── Query_3_Screenshot.png                   # Output of purchasing behavior by GDP tier query (M3)
+    ├── Query_4_Screenshot.png                   # Output of monthly revenue trend by GDP tier query (M3)
+    ├── Query_5_Screenshot.png                   # Output of source integration diagnostics query (M3)
+    ├── Query_Results_Screenshot.png             # Output of total revenue per product query on retail.csv (M2)
+    ├── data_flow_diagram.png                    # Proposed data flow pipeline (M1)
+    ├── stack_architecture_diagram_old.png       # Proposed big data technology stack (M1)
+    └── stack_architecture_diagram.png           # Final big data technology stack (M4)
 ```
 
 ---
@@ -173,27 +184,36 @@ hdfs dfs -put API_NY.GDP.MKTP.CD_DS2_en_csv_v2_*.csv /retail/worldbank/
 ---
 
 ## Running the Pipeline
- 
-### M3 Pipeline — Multi-Source Analytics (Current)
- 
+
+### M4 Pipeline — Multi-Source Analytics with Error Handling (Current)
+
 Download the script from the repository:
- 
+
 ```bash
 curl -o ~/multi_source_retail_analytics.scala \
   "https://raw.githubusercontent.com/ebanks28/cs4265-retail-inventory-big-data-project/main/src/multi_source_retail_analytics.scala"
 ```
- 
-Run the full end-to-end pipeline:
- 
+
+> **Alternative to curl:** If your WSL environment cannot reach the internet, clone
+> the repository on Windows via GitHub Desktop and copy the script into WSL:
+> ```bash
+> cp /mnt/c/path/to/repo/src/multi_source_retail_analytics.scala ~/
+> ```
+
+Fix line endings if needed, then run:
+
 ```bash
+sed -i 's/\r//' ~/multi_source_retail_analytics.scala
 spark-shell --master local[*] -i ~/multi_source_retail_analytics.scala
 ```
 
----
+### Previous Pipeline Versions (Reference Only)
+- `src/multi_source_retail_analytics_old.scala` — M3 multi-source pipeline
+- `src/retail_analysis.scala` — M2 single-source pipeline
 
 ## Pipeline Description
  
-The M3 pipeline (`multi_source_retail_analytics.scala`) executes the following stages:
+The M4 pipeline (`multi_source_retail_analytics.scala`) executes the following stages:
  
 ### Stage 1 — Data Ingestion
 - Reads `retail.csv` from HDFS using Spark's CSV reader
@@ -205,7 +225,8 @@ The M3 pipeline (`multi_source_retail_analytics.scala`) executes the following s
 - Filters cancellation records (InvoiceNo prefixed with `C`)
 - Removes rows with non-positive `Quantity` or `UnitPrice`
 - Derives `Revenue` (Quantity × UnitPrice)
-- Parses `InvoiceDate` (format: `yyyy/MM/dd HH:mm:ss`) to extract `Year` and `Month`
+- Parses `InvoiceDate` using `coalesce()` to handle two format variants
+  (`yyyy/MM/dd HH:mm:ss` and `MM/dd/yyyy HH:mm`) to extract `Year` and `Month`
 - Selects and casts the 2011 GDP column from the World Bank dataset
  
 ### Stage 3 — Multi-Source Integration
@@ -214,7 +235,7 @@ The M3 pipeline (`multi_source_retail_analytics.scala`) executes the following s
   to match World Bank formal names
 - Joins retail data to GDP data on normalized country name (left join)
 - Registers the unified result as a Spark SQL temporary view: `retail_gdp`
-- Match rate: 396,807 / 397,884 rows (99.7%) across 34 of 37 countries
+- Match rate: 396,832 / 397,884 rows (99.7%) across 34 of 37 countries
  
 ### Stage 4 — Analytical Queries
 Five Spark SQL queries execute on the `retail_gdp` view:
@@ -249,11 +270,11 @@ As the pipeline runs, you will see `[INFO]` log lines indicating progress throug
 [INFO] Raw retail row count: 541909
 [INFO] Clean retail row count: 397884
 [INFO] Loading World Bank GDP dataset...
-[INFO] GDP records loaded: 217
+[INFO] GDP records loaded: 261
 [INFO] Applying country name mapping...
 [INFO] Joining retail data with World Bank GDP data...
-[INFO] Rows with GDP match:    396807
-[INFO] Rows without GDP match: 1077
+[INFO] Rows with GDP match:    396832
+[INFO] Rows without GDP match: 1052
 [INFO] --- Query 1: Revenue by Country with GDP Context ---
 ...
 [INFO] ========== Multi-Source Analytics Pipeline Complete ==========
@@ -261,25 +282,25 @@ As the pipeline runs, you will see `[INFO]` log lines indicating progress throug
  
 ---
 
-## Current Status (Milestone 3)
- 
+## Current Status (Milestone 4 — Complete)
+
 ### What Works
 - HDFS single-node pseudo-distributed cluster fully operational
 - Two distinct data sources ingested and stored in HDFS
-- Full cleaning and transformation pipeline including date parsing and revenue derivation
+- Full cleaning and transformation pipeline including dual-format date parsing and revenue derivation
 - Country name normalization resolving mismatches between UCI and World Bank naming conventions
-- Multi-source join with 99.7% row match rate
+- Multi-source join with 99.7% row match rate (396,832 / 397,884 rows)
 - Five Spark SQL analytical queries executing successfully
 - All outputs written to HDFS as Parquet files
- 
+- Runtime error handling: retry logic, graceful GDP fallback, HDFS file existence checks
+- Fresh clone test completed successfully
+- Data dictionary, validation report, and architecture documentation complete
+
 ### Known Limitations
 - Single-node deployment is memory-bound at approximately 100 million rows
   (demonstrated in M2 scalability experiments)
 - Channel Islands, European Community, and Unspecified are unmappable to World Bank
   country entries and are excluded from GDP-dependent queries
 - Pipeline is batch-oriented; real-time streaming ingestion is outside project scope
- 
-### What's Next (Milestone 4)
-- Final validation and portfolio-ready documentation
-- Data dictionary for the `retail_gdp` schema
-- Complete bottleneck analysis and scalability conclusions
+- `settings.yaml` configuration values are not yet read at runtime; parameters
+  remain in the script's configuration block
