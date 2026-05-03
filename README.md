@@ -91,9 +91,9 @@ cs4265-retail-inventory-big-data-project/
     ├── Query_4_Screenshot.png                   # Output of monthly revenue trend by GDP tier query (M3)
     ├── Query_5_Screenshot.png                   # Output of source integration diagnostics query (M3)
     ├── Query_Results_Screenshot.png             # Output of total revenue per product query on retail.csv (M2)
-    ├── data_flow_diagram.png                    # Proposed data flow pipeline (M1)
-    ├── stack_architecture_diagram_old.png       # Proposed big data technology stack (M1)
-    └── stack_architecture_diagram.png           # Final big data technology stack (M4)
+    ├── stack_architecture_final.png             # Final big data technology stack (M4)
+    ├── data_flow_diagram.pdf.png                # Proposed data flow pipeline (M1)
+    └── stack_architecture_diagram.pdf           # Proposed big data technology stack (M1)
 ```
 
 ---
