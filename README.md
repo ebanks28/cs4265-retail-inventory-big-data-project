@@ -207,10 +207,6 @@ sed -i 's/\r//' ~/multi_source_retail_analytics.scala
 spark-shell --master local[*] -i ~/multi_source_retail_analytics.scala
 ```
 
-### Previous Pipeline Versions (Reference Only)
-- `src/multi_source_retail_analytics_old.scala` — M3 multi-source pipeline
-- `src/retail_analysis.scala` — M2 single-source pipeline
-
 ## Pipeline Description
  
 The M4 pipeline (`multi_source_retail_analytics.scala`) executes the following stages:
