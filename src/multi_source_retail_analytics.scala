@@ -1,5 +1,5 @@
 /**
- * multi_source_analytics.scala
+ * multi_source_retail_analytics.scala
  * --------------------------
  * CS 4265 - Big Data Analytics
  * Milestone 4: Final Deliverable
@@ -11,7 +11,7 @@
  * Joins on Country and runs combined analytical queries.
  *
  * Download on WSL with:
- *   curl -o ~/multi_source_retail_analytics.scala "https://raw.githubusercontent.com/ebanks28/cs4265-retail-inventory-big-data-project/main/src/multi_source_retail_analytics_final.scala"
+ *   curl -o ~/multi_source_retail_analytics.scala "https://raw.githubusercontent.com/ebanks28/cs4265-retail-inventory-big-data-project/main/src/multi_source_retail_analytics.scala"
  * Verify with:
  *   cat ~/multi_source_retail_analytics.scala | head -20 
  *   (The above command should show the first 20 lines of this file.)
