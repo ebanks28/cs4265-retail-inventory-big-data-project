@@ -68,14 +68,13 @@ cs4265-retail-inventory-big-data-project/
 ├── LICENSE                                      # Open source license
 ├── .gitattributes                               # Uses UNIX line endings when cloned regardless of OS
 ├── .gitignore                                   # Excludes data, credentials, artifacts
-├── config/
-│   └── settings.yaml                            # Pipeline configuration parameters
 ├── docs/
 |   ├── CS4265_Evan_Banks_M1.pdf                 # Milestone 1 initial report
 │   ├── CS4265_Evan_Banks_M2.pdf                 # Milestone 2 progress report
 │   ├── CS4265_Evan_Banks_M3.pdf                 # Milestone 3 progress report
 |   ├── CS4265_Evan_Banks_M4.pdf                 # Milestone 4 final report
 |   ├── Data_Dictionary.md                       # Schema documentation for the retail_gdp unified dataset
+|   ├── settings.yaml                            # Pipeline configuration parameters
 |   └── validation.md                            # Data validation report for the M4 pipeline
 ├── src/
 |   ├── multi_source_retail_analytics.scala      # M4 refined multi-source analytics pipeline
